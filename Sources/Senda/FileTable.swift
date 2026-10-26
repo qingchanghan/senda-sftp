@@ -40,7 +40,7 @@ private final class DownloadPromise: NSObject, NSFilePromiseProviderDelegate {
 }
 
 final class FileNSTableView: NSTableView {
-    var enter: (() -> Void)?
+    var enter: (@MainActor () -> Void)?
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         if window?.firstResponder === self, handleSelectionShortcut(event) { return true }
         return super.performKeyEquivalent(with: event)
@@ -61,6 +61,7 @@ final class FileNSTableView: NSTableView {
     }
 }
 
+@MainActor
 struct FileTable: NSViewRepresentable {
     let model: AppModel
     let remote: Bool
