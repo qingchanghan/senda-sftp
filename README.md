@@ -24,8 +24,9 @@
 
 ## Download
 
-Get the Apple silicon build from [GitHub Releases](https://github.com/qingchanghan/senda-sftp/releases/latest).
-Unzip `Senda-macOS-arm64.zip` and move `Senda.app` to Applications. Requires macOS 13+.
+Get `Senda-macOS-arm64.dmg` from [GitHub Releases](https://github.com/qingchanghan/senda-sftp/releases/latest).
+Open the disk image and drag `Senda.app` onto Applications, then eject the image.
+Requires Apple silicon and macOS 13+. A ZIP download is also available.
 The current build is ad hoc signed and has not been notarized by Apple.
 Intel users can build from source; Intel hardware has not yet been verified.
 
@@ -41,8 +42,8 @@ cd senda-sftp
 open dist/Senda.app
 ```
 
-The script builds with two jobs and creates `dist/Senda.app` plus a ZIP for the
-build machine's architecture. Drag the app to Applications if desired. Local
+The script builds with two jobs and creates `dist/Senda.app` plus a DMG and ZIP for
+the build machine's architecture. Drag the app to Applications if desired. Local
 builds are ad hoc signed, not Developer ID signed or notarized. The initial release
 has been verified on Apple silicon; Intel has not yet been verified.
 

@@ -5,6 +5,8 @@
    disposable development account to verify the real SSH proxy path.
 3. Quit Senda and run `./scripts/build-app.sh`. Verify the bundle with
    `codesign --verify --deep --strict dist/Senda.app` and test the generated ZIP.
+   The script also produces a verified, compressed DMG containing the app and an
+   `Applications` shortcut. Mount it read-only to check the contents before release.
 4. Review tracked files for private hosts, paths, credentials and unrelated files.
    Do not package the working directory with a blanket recursive ZIP command.
 5. Run `python3 scripts/package-source.py`. It packages only reviewed Git-tracked
@@ -18,6 +20,12 @@ need a Developer ID signature and Apple notarization for a smoother installation
 experience. No signing identities, credentials or automatic publishing are bundled.
 GitHub Actions only validates code and builds locally on the runner; it does not
 publish releases.
+
+To add a DMG to an existing release without rebuilding the app, extract its verified
+ZIP into a temporary directory and run `./scripts/package-dmg.sh /path/to/Senda.app`.
+The architecture is read from the app binary. Verify the mounted app's signature
+and compare its files with the published ZIP, then add the DMG and its checksum to
+the release. Keep the existing tag, app archives and their checksums unchanged.
 
 ## Screenshots
 

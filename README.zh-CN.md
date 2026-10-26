@@ -24,8 +24,9 @@
 
 ## 下载
 
-在 [GitHub Releases](https://github.com/qingchanghan/senda-sftp/releases/latest) 下载 Apple silicon 版本。
-解压 `Senda-macOS-arm64.zip`，把 `Senda.app` 拖到「应用程序」，需要 macOS 13+。
+在 [GitHub Releases](https://github.com/qingchanghan/senda-sftp/releases/latest) 下载 `Senda-macOS-arm64.dmg`。
+双击打开，把 `Senda.app` 拖到 `Applications`，完成后推出磁盘映像。
+需要 Apple silicon 和 macOS 13+；也提供 ZIP 下载。
 当前安装包使用 ad hoc 签名，尚未经过 Apple 公证。
 Intel 用户可以从源码构建；尚未在 Intel 硬件上验证。
 
@@ -41,7 +42,7 @@ cd senda-sftp
 open dist/Senda.app
 ```
 
-构建脚本限制两个任务，输出 `dist/Senda.app` 和当前架构的 ZIP；可把应用拖到「应用程序」。本机构建使用 ad hoc 签名，尚未做 Developer ID 签名和公证；已验证 Apple silicon，Intel 尚未验证。
+构建脚本限制两个任务，输出 `dist/Senda.app` 和当前架构的 DMG、ZIP；可把应用拖到「应用程序」。本机构建使用 ad hoc 签名，尚未做 Developer ID 签名和公证；已验证 Apple silicon，Intel 尚未验证。
 
 从 Harbor 升级会一次性迁移已保存的主机、路径、隐藏文件和代理 PATH 设置，原偏好设置仍保留。
 
