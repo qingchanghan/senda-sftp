@@ -2,8 +2,10 @@
 
 Verified locally on 2026-10-26 with macOS 26.4.1, Apple silicon, Swift 6.1.2 in Swift
 5 language mode. The minimum deployment target is macOS 13; a macOS 13 device and
-Intel hardware have not been tested. GitHub Actions has been configured but has not
-yet run on a public repository.
+Intel hardware have not been tested. GitHub Actions runs the offline checks,
+builds the application and verifies its signature on macOS 14. See the
+[CI history](https://github.com/qingchanghan/senda-sftp/actions/workflows/checks.yml)
+for results for each commit.
 
 | Check | Result |
 | --- | --- |
