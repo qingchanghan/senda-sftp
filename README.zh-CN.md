@@ -2,7 +2,7 @@
 
 **A path for your files.** 免费、原生的 macOS SFTP 文件传输工具，直接沿用现有 SSH 配置，支持 `ProxyCommand` 和 `ProxyJump`。
 
-[English](README.md) · [贡献指南](CONTRIBUTING.md) · [更新记录](CHANGELOG.md) · [MIT 许可](LICENSE)
+[下载](https://github.com/qingchanghan/senda-sftp/releases/latest) · [English](README.md) · [贡献指南](CONTRIBUTING.md) · [更新记录](CHANGELOG.md) · [MIT 许可](LICENSE)
 
 ![Senda 文件工作台](docs/images/workspace-light.png)
 
@@ -22,12 +22,21 @@
 - 原生虚拟化文件列表、连接复用、进度局部刷新；传输时仍可浏览目录。
 - 明暗主题统一使用 [Beautiful UI](https://www.beautifului.dev/) 的全局令牌。[组件来源与许可](THIRD_PARTY_NOTICES.md)。
 
+## 下载
+
+在 [GitHub Releases](https://github.com/qingchanghan/senda-sftp/releases/latest) 下载 Apple silicon 版本。
+解压 `Senda-macOS-arm64.zip`，把 `Senda.app` 拖到「应用程序」，需要 macOS 13+。
+当前安装包使用 ad hoc 签名，尚未经过 Apple 公证。
+Intel 用户可以从源码构建；尚未在 Intel 硬件上验证。
+
 ## 构建运行
 
 需要 macOS 13+、含 Swift 5.9+ 的 Apple Command Line Tools（或 Xcode），以及用于检查设计令牌的 Python 3。没有 Node/Electron 或第三方运行时依赖。
 
 ```bash
 xcode-select --install  # 已安装则跳过
+git clone https://github.com/qingchanghan/senda-sftp.git
+cd senda-sftp
 ./scripts/build-app.sh
 open dist/Senda.app
 ```

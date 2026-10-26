@@ -2,7 +2,7 @@
 
 **A path for your files.** A free, native macOS SFTP app that works with your existing SSH configuration — including `ProxyCommand` and `ProxyJump`.
 
-[简体中文](README.zh-CN.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [MIT license](LICENSE)
+[Download](https://github.com/qingchanghan/senda-sftp/releases/latest) · [简体中文](README.zh-CN.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [MIT license](LICENSE)
 
 ![Senda — local and remote files with whole-folder transfer progress](docs/images/workspace-light.png)
 
@@ -22,12 +22,21 @@
 - **Responsive by design.** Native virtualized file tables, independent browsing and transfer connections, throttled per-task progress and connection reuse.
 - **Light and dark.** Native adaptations of [Beautiful UI](https://www.beautifului.dev/) with one shared token palette. [Attribution and source mapping](THIRD_PARTY_NOTICES.md).
 
+## Download
+
+Get the Apple silicon build from [GitHub Releases](https://github.com/qingchanghan/senda-sftp/releases/latest).
+Unzip `Senda-macOS-arm64.zip` and move `Senda.app` to Applications. Requires macOS 13+.
+The current build is ad hoc signed and has not been notarized by Apple.
+Intel users can build from source; Intel hardware has not yet been verified.
+
 ## Build and run
 
 Requires macOS 13+, Apple Command Line Tools with Swift 5.9+ (or Xcode), and Python 3 for the design-token check. No Node, Electron or third-party runtime dependencies.
 
 ```bash
 xcode-select --install  # only if Command Line Tools are not installed
+git clone https://github.com/qingchanghan/senda-sftp.git
+cd senda-sftp
 ./scripts/build-app.sh
 open dist/Senda.app
 ```
