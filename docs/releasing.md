@@ -5,6 +5,8 @@
    disposable development account to verify the real SSH proxy path.
 3. Quit Senda and run `./scripts/build-app.sh`. Verify the bundle with
    `codesign --verify --deep --strict dist/Senda.app` and test the generated ZIP.
+   Release builds strip Swift's debug map before signing and reject binaries that
+   still contain the checkout path, so local build paths are not distributed.
    The script also produces a verified, compressed DMG containing the app and an
    `Applications` shortcut. Mount it read-only to check the contents before release.
 4. Review tracked files for private hosts, paths, credentials and unrelated files.

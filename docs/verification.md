@@ -18,6 +18,7 @@ for results for each commit.
 | Release bundle signature | `codesign --verify --deep --strict` passed |
 | Binary ZIP integrity | Passed |
 | Compressed DMG integrity | Passed |
+| Release binary build-path removal | Passed |
 
 The directory regression covers differently sized files across nested directories,
 empty files, empty directories, skipped symlinks and root collision renaming. Every

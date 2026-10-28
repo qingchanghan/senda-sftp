@@ -12,6 +12,19 @@ bin_dir="$(swift build -c "$configuration" --show-bin-path)"
 app="$PWD/dist/Senda.app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin_dir/Senda" "$app/Contents/MacOS/Senda"
+if [ "$configuration" = "release" ]; then
+    # Swift's release debug map can retain absolute build-machine paths.
+    # Strip it before signing and fail if the checkout path is still embedded.
+    xcrun strip -S "$app/Contents/MacOS/Senda"
+    python3 - "$app/Contents/MacOS/Senda" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+if os.fsencode(Path.cwd()) in Path(sys.argv[1]).read_bytes():
+    raise SystemExit('Release binary still contains the local checkout path.')
+PY
+fi
 cat > "$app/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

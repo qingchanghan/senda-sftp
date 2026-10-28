@@ -11,6 +11,7 @@
 - Keep the previous location on invalid input and discard obsolete navigation
   results. File symlinks and special files retain their existing restrictions.
 - Add offline address and real SFTP queue regression checks.
+- Strip local build paths from release debug maps before signing and packaging.
 
 ## 1.5.0 — 2026-10-26
 
