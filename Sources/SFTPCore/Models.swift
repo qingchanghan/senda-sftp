@@ -9,6 +9,7 @@ public struct FileEntry: Identifiable, Hashable, Sendable {
     public let permissions: UInt32
     public let modified: Date?
     public var isDirectory: Bool { permissions & 0o170000 == 0o040000 }
+    public var isRegularFile: Bool { permissions & 0o170000 == 0o100000 }
     public var isSymbolicLink: Bool { permissions & 0o170000 == 0o120000 }
     public init(name: String, path: String, size: UInt64 = 0, permissions: UInt32 = 0, modified: Date? = nil) {
         self.name = name; self.path = path; self.size = size

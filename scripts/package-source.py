@@ -12,7 +12,7 @@ if not paths:
 for name in paths:
     if name.startswith(('.build/', 'dist/', '.local-notes/', '.env')) or (root / name).is_symlink():
         raise SystemExit('Unexpected private/build/symlink path in source manifest: ' + name)
-out = root / 'dist/Senda-1.5.0-source.zip'
+out = root / 'dist/Senda-1.6.0-source.zip'
 out.parent.mkdir(exist_ok=True)
 with zipfile.ZipFile(out, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
     for name in sorted(paths):

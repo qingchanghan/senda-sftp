@@ -11,6 +11,7 @@ struct SendaApp: App {
         if CommandLine.arguments.contains("--probe") { runProbe() }
         if CommandLine.arguments.contains("--native-checks") { runNativeChecks() }
         if CommandLine.arguments.contains("--selection-checks") { runSelectionChecks() }
+        if CommandLine.arguments.contains("--address-checks") { runAddressChecks() }
         if CommandLine.arguments.contains("--batch-checks") { runBatchChecks() }
         if CommandLine.arguments.contains("--performance-checks") { runPerformanceChecks() }
         // OpenSSH invokes the same executable with the authentication prompt as its only argument.
@@ -46,7 +47,7 @@ struct SendaApp: App {
                 Button("刷新 SSH 主机") { model.refreshHosts() }
             }
             CommandMenu("文件") {
-                Button("刷新文件列表") { model.refreshLocal(); if model.connected { model.navigateRemote(model.remotePath) } }.keyboardShortcut("r", modifiers: .command)
+                Button("刷新文件列表") { model.refreshLocal(); if model.connected { model.refreshRemote() } }.keyboardShortcut("r", modifiers: .command)
                 Button("打开本地目录…") { model.chooseLocalFolder() }.keyboardShortcut("o", modifiers: .command)
                 Toggle("显示隐藏文件", isOn: $model.showHidden).keyboardShortcut(".", modifiers: [.command, .shift])
             }

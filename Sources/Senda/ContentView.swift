@@ -74,6 +74,7 @@ struct ContentView: View {
     private func filePane(remote: Bool) -> some View {
         let files = remote ? model.visibleRemote : model.visibleLocal
         let selection = remote ? model.remoteSelection : model.localSelection
+        let addressedFile = remote ? model.remoteAddressFile : model.localAddressFile
         return VStack(spacing: T.space(0)) {
             HStack(spacing: T.space(2)) {
                 Image(systemName: remote ? "server.rack" : "laptopcomputer").font(.system(size: 14)).foregroundStyle(sendaAccent)
@@ -83,21 +84,21 @@ struct ContentView: View {
                 Spacer()
                 if remote && model.isRemoteLoading { ProgressView().controlSize(.mini) }
                 if !remote && model.isLocalLoading { ProgressView().controlSize(.mini) }
-                Button { model.createFolder(remote: remote) } label: { Image(systemName: "folder.badge.plus") }.help("新建文件夹").disabled(remote && !model.connected)
-                Button { if remote { model.navigateRemote(model.remotePath) } else { model.refreshLocal() } } label: { Image(systemName: "arrow.clockwise") }.help("刷新").disabled(remote && !model.connected)
+                Button { model.createFolder(remote: remote) } label: { Image(systemName: "folder.badge.plus") }.help("新建文件夹").disabled(addressedFile != nil || (remote && !model.connected))
+                Button { if remote { model.refreshRemote() } else { model.refreshLocal() } } label: { Image(systemName: "arrow.clockwise") }.help("刷新").disabled(remote && !model.connected)
             }.buttonStyle(SendaIconButtonStyle()).foregroundStyle(T.ink2).padding(.horizontal, T.space(3.5)).padding(.top, T.space(3)).padding(.bottom, T.space(2.5))
 
             HStack(spacing: T.space(2)) {
                 Button {
-                    if remote { model.navigateRemote(RemotePath.parent(model.remotePath)) }
-                    else { model.navigateLocal((model.localPath as NSString).deletingLastPathComponent) }
+                    if remote { model.navigateRemote(addressedFile == nil ? RemotePath.parent(model.remotePath) : model.remotePath) }
+                    else { model.navigateLocal(addressedFile == nil ? (model.localPath as NSString).deletingLastPathComponent : model.localPath) }
                 } label: { Image(systemName: "arrow.up").font(.system(size: 11, weight: .semibold)) }
-                    .buttonStyle(.plain).disabled(remote && !model.connected).help("上一级目录")
+                    .buttonStyle(.plain).disabled(remote && !model.connected).help(addressedFile == nil ? "上一级目录" : "打开所在文件夹")
                 Divider().frame(height: T.space(3.5))
                 if remote {
-                    DirectoryPathField(path: model.remotePath, enabled: model.connected, remote: true, onNavigate: model.navigateRemote)
+                    BrowserPathField(path: model.remoteAddress, revision: model.remoteNavigationRevision, enabled: model.connected, remote: true, onNavigate: model.navigateRemote)
                 } else {
-                    DirectoryPathField(path: model.localPath, enabled: true, remote: false, onNavigate: model.navigateLocal)
+                    BrowserPathField(path: model.localAddress, revision: model.localNavigationRevision, enabled: true, remote: false, onNavigate: model.navigateLocal)
                     Button { model.chooseLocalFolder() } label: { Image(systemName: "ellipsis") }.buttonStyle(.plain).help("选择本地目录")
                 }
             }
@@ -106,33 +107,37 @@ struct ContentView: View {
             .overlay(RoundedRectangle(cornerRadius: T.radiusControl).strokeBorder(T.line))
             .padding(.horizontal, T.space(3)).padding(.bottom, T.space(2.5))
 
-            ZStack {
-                FileTable(model: model, remote: remote, entries: files)
-                if files.isEmpty {
-                    VStack(spacing: T.space(3)) {
-                        Image(systemName: remote && !model.connected ? "point.3.connected.trianglepath.dotted" : "tray.and.arrow.down")
-                            .font(.system(size: 37, weight: .ultraLight)).foregroundStyle(T.ink3)
-                        Text(remote && !model.connected ? "连接你的开发机" : "这里还没有文件")
-                            .font(.system(size: 15, weight: .medium))
-                        Text(remote && !model.connected ? "选择左侧主机，或输入 SSH 别名\nProxyCommand 会自动沿用" : (remote ? "将本地文件拖到这里上传" : "将远程文件拖到这里下载"))
-                            .font(.system(size: 11)).foregroundStyle(T.ink2).multilineTextAlignment(.center).lineSpacing(T.space(1))
-                    }.padding(.bottom, T.space(7.5)).allowsHitTesting(false)
+            if let file = addressedFile {
+                AddressedFileView(model: model, file: file, remote: remote)
+            } else {
+                ZStack {
+                    FileTable(model: model, remote: remote, entries: files)
+                    if files.isEmpty {
+                        VStack(spacing: T.space(3)) {
+                            Image(systemName: remote && !model.connected ? "point.3.connected.trianglepath.dotted" : "tray.and.arrow.down")
+                                .font(.system(size: 37, weight: .ultraLight)).foregroundStyle(T.ink3)
+                            Text(remote && !model.connected ? "连接你的开发机" : "这里还没有文件")
+                                .font(.system(size: 15, weight: .medium))
+                            Text(remote && !model.connected ? "选择左侧主机，或输入 SSH 别名\nProxyCommand 会自动沿用" : (remote ? "将本地文件拖到这里上传" : "将远程文件拖到这里下载"))
+                                .font(.system(size: 11)).foregroundStyle(T.ink2).multilineTextAlignment(.center).lineSpacing(T.space(1))
+                        }.padding(.bottom, T.space(7.5)).allowsHitTesting(false)
+                    }
                 }
+                SendaRule()
+                HStack(spacing: T.space(1.5)) {
+                    Text(selection.isEmpty ? "\(files.count) 个项目" : "已选择 \(selection.count) 个项目").font(.system(size: 10)).foregroundStyle(T.ink2)
+                    Button(selection.count == files.count && !files.isEmpty ? "取消选择" : "全选") {
+                        if selection.count == files.count { model.deselectAll(remote: remote) }
+                        else { model.selectAll(remote: remote) }
+                    }.buttonStyle(.plain).font(.system(size: 10)).disabled(files.isEmpty)
+                        .help("⌘ 点选多个 · ⇧ 连选 · ⌘A 全选 · ⇧⌘A 取消选择")
+                    Spacer()
+                    Button { if remote { model.downloadSelection() } else { model.uploadSelection() } } label: {
+                        Label(selection.isEmpty ? (remote ? "下载到本地" : "上传到远程") : "\(remote ? "下载" : "上传")所选（\(selection.count)）", systemImage: remote ? "arrow.down" : "arrow.up")
+                            .font(.system(size: 11, weight: .medium))
+                    }.buttonStyle(SendaActionButtonStyle()).disabled(selection.isEmpty || !model.connected)
+                }.padding(.horizontal, T.space(3)).padding(.vertical, T.space(2.5))
             }
-            SendaRule()
-            HStack(spacing: T.space(1.5)) {
-                Text(selection.isEmpty ? "\(files.count) 个项目" : "已选择 \(selection.count) 个项目").font(.system(size: 10)).foregroundStyle(T.ink2)
-                Button(selection.count == files.count && !files.isEmpty ? "取消选择" : "全选") {
-                    if selection.count == files.count { model.deselectAll(remote: remote) }
-                    else { model.selectAll(remote: remote) }
-                }.buttonStyle(.plain).font(.system(size: 10)).disabled(files.isEmpty)
-                    .help("⌘ 点选多个 · ⇧ 连选 · ⌘A 全选 · ⇧⌘A 取消选择")
-                Spacer()
-                Button { if remote { model.downloadSelection() } else { model.uploadSelection() } } label: {
-                    Label(selection.isEmpty ? (remote ? "下载到本地" : "上传到远程") : "\(remote ? "下载" : "上传")所选（\(selection.count)）", systemImage: remote ? "arrow.down" : "arrow.up")
-                        .font(.system(size: 11, weight: .medium))
-                }.buttonStyle(SendaActionButtonStyle()).disabled(selection.isEmpty || !model.connected)
-            }.padding(.horizontal, T.space(3)).padding(.vertical, T.space(2.5))
         }
         .background(SendaTheme.surface)
         .clipShape(RoundedRectangle(cornerRadius: T.radiusCard))
@@ -185,16 +190,37 @@ struct ContentView: View {
 
 }
 
-private struct DirectoryPathField: View {
+private struct BrowserPathField: View {
+    private struct Location: Equatable {
+        let path: String
+        let revision: UUID
+    }
+
     let path: String
+    let revision: UUID
     let enabled: Bool
     let remote: Bool
     let onNavigate: (String) -> Void
     @State private var draft = ""
+    @State private var committed = ""
+    @State private var submitted: String?
+    @FocusState private var focused: Bool
     var body: some View {
-        TextField(enabled ? (remote ? "远程目录" : "本地目录") : "等待连接…", text: $draft)
+        TextField(enabled ? "文件或文件夹路径" : "等待连接…", text: $draft)
             .textFieldStyle(.plain).font(.system(size: 11, design: .monospaced)).disabled(!enabled)
-            .onAppear { draft = path }.onChange(of: path) { draft = $0 }
-            .onSubmit { onNavigate(draft) }.accessibilityLabel(remote ? "远程目录路径" : "本地目录路径")
+            .focused($focused)
+            .onAppear { draft = path; committed = path }
+            .onChange(of: Location(path: path, revision: revision)) { location in
+                // Metadata refreshes must not replace an address still being typed.
+                if !focused || draft == committed || draft == submitted || (submitted == nil && location.path != committed) {
+                    draft = location.path
+                }
+                committed = location.path
+                submitted = nil
+            }
+            .onSubmit { submitted = draft; onNavigate(draft) }
+            .onExitCommand { draft = path; submitted = nil; focused = false }
+            .accessibilityLabel(remote ? "远程文件或文件夹路径" : "本地文件或文件夹路径")
+            .help("输入文件或文件夹路径，按回车定位；Esc 恢复当前地址")
     }
 }

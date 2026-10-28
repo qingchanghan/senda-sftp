@@ -11,8 +11,14 @@ final class AppModel: ObservableObject {
     @Published var isConnecting = false
     @Published var localPath = ""
     @Published var remotePath = ""
-    var localFiles: [FileEntry] = [] { didSet { visibleLocal = filter(localFiles) } }
-    var remoteFiles: [FileEntry] = [] { didSet { visibleRemote = filter(remoteFiles) } }
+    @Published private(set) var localAddressFile: FileEntry?
+    @Published private(set) var remoteAddressFile: FileEntry?
+    @Published private(set) var localNavigationRevision = UUID()
+    @Published private(set) var remoteNavigationRevision = UUID()
+    var localAddress: String { localAddressFile?.path ?? localPath }
+    var remoteAddress: String { remoteAddressFile?.path ?? remotePath }
+    var localFiles: [FileEntry] = [] { didSet { visibleLocal = filter(localFiles, addressed: localAddressFile) } }
+    var remoteFiles: [FileEntry] = [] { didSet { visibleRemote = filter(remoteFiles, addressed: remoteAddressFile) } }
     @Published private(set) var visibleLocal: [FileEntry] = []
     @Published private(set) var visibleRemote: [FileEntry] = []
     @Published var localSelection = Set<String>()
@@ -22,7 +28,8 @@ final class AppModel: ObservableObject {
     @Published var showHidden = false {
         didSet {
             preferences.set(showHidden, forKey: "showHidden")
-            visibleLocal = filter(localFiles); visibleRemote = filter(remoteFiles)
+            visibleLocal = filter(localFiles, addressed: localAddressFile)
+            visibleRemote = filter(remoteFiles, addressed: remoteAddressFile)
             localSelection.formIntersection(Set(visibleLocal.map(\.path)))
             remoteSelection.formIntersection(Set(visibleRemote.map(\.path)))
         }
@@ -38,6 +45,7 @@ final class AppModel: ObservableObject {
     @Published var status = "选择一台开发机，开始连接"
     @Published var proxyPath = "" { didSet { preferences.set(proxyPath, forKey: "proxyPath") } }
     private let preferences: UserDefaults
+    private let sessionFactory: (String, String, String?) throws -> SFTPSession
     private var browser: SFTPSession?
     private var connectionID = UUID()
     private var listingID = UUID()
@@ -51,8 +59,10 @@ final class AppModel: ObservableObject {
 
     var connected: Bool { (demoMode || browser != nil) && !connectedHost.isEmpty }
 
-    init(preferences: UserDefaults = .standard, loadFiles: Bool = true, loadHosts: Bool = true, demoMode: Bool = false) {
+    init(preferences: UserDefaults = .standard, loadFiles: Bool = true, loadHosts: Bool = true, demoMode: Bool = false,
+         sessionFactory: @escaping (String, String, String?) throws -> SFTPSession = { try SFTPSession(host: $0, proxyPath: $1, askpass: $2) }) {
         self.demoMode = demoMode
+        self.sessionFactory = sessionFactory
         hosts = demoMode || !loadHosts ? [] : SSHConfig.hosts()
         self.preferences = preferences
         hostInput = preferences.string(forKey: "lastHost") ?? hosts.first?.alias ?? ""
@@ -76,46 +86,51 @@ final class AppModel: ObservableObject {
         if remote { remoteSelection = [] } else { localSelection = [] }
     }
 
-    private func filter(_ entries: [FileEntry]) -> [FileEntry] { showHidden ? entries : entries.filter { !$0.name.hasPrefix(".") } }
+    private func filter(_ entries: [FileEntry], addressed: FileEntry?) -> [FileEntry] {
+        showHidden || addressed != nil ? entries : entries.filter { !$0.name.hasPrefix(".") }
+    }
 
     func refreshHosts() { if !demoMode { hosts = SSHConfig.hosts() } }
 
-    func refreshLocal() {
+    func refreshLocal() { navigateLocal(localAddress) }
+
+    func navigateLocal(_ requested: String) {
         guard !demoMode else { return }
-        let requested = localPath, token = UUID()
+        let directory = localPath, token = UUID()
         localListingID = token; isLocalLoading = true
         Task {
             do {
                 let result = try await Task.detached(priority: .userInitiated) {
-                    try Self.localContents(requested)
+                    try BrowserLocation.local(requested, relativeTo: directory)
                 }.value
                 guard localListingID == token else { return }
-                localFiles = result.1; localPath = result.0; isLocalLoading = false
-                preferences.set(localPath, forKey: "localPath")
-                localSelection.formIntersection(Set(visibleLocal.map(\.path)))
+                showLocation(result, remote: false); isLocalLoading = false
             } catch {
                 guard localListingID == token else { return }
-                isLocalLoading = false; alertMessage = "无法打开本地目录：\(error.localizedDescription)"
+                isLocalLoading = false; alertMessage = "无法打开本地路径：\(error.localizedDescription)"
             }
         }
     }
 
-    nonisolated private static func localContents(_ path: String) throws -> (String, [FileEntry]) {
-            let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath).standardizedFileURL
-            let values: Set<URLResourceKey> = [.isDirectoryKey, .isSymbolicLinkKey, .fileSizeKey, .contentModificationDateKey]
-            let files = try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: Array(values))
-            let entries = try files.map { item in
-                let value = try item.resourceValues(forKeys: values)
-                let mode: UInt32 = value.isSymbolicLink == true ? 0o120000 : (value.isDirectory == true ? 0o040000 : 0o100000)
-                return FileEntry(name: item.lastPathComponent, path: item.path, size: UInt64(max(0, value.fileSize ?? 0)), permissions: mode, modified: value.contentModificationDate)
-            }.sorted {
-                if $0.isDirectory != $1.isDirectory { return $0.isDirectory }
-                return $0.name.localizedStandardCompare($1.name) == .orderedAscending
-            }
-            return (url.path, entries)
+    func showLocation(_ location: BrowserLocation, remote: Bool) {
+        if remote {
+            let sameDirectory = remotePath == location.directoryPath
+            remotePath = location.directoryPath; remoteAddressFile = location.file; remoteFiles = location.entries
+            if let file = location.file { remoteSelection = [file.path] }
+            else if sameDirectory { remoteSelection.formIntersection(Set(visibleRemote.map(\.path))) }
+            else { remoteSelection = [] }
+            preferences.set(remotePath, forKey: "remotePath.\(connectedHost)")
+            remoteNavigationRevision = UUID()
+        } else {
+            let sameDirectory = localPath == location.directoryPath
+            localPath = location.directoryPath; localAddressFile = location.file; localFiles = location.entries
+            if let file = location.file { localSelection = [file.path] }
+            else if sameDirectory { localSelection.formIntersection(Set(visibleLocal.map(\.path))) }
+            else { localSelection = [] }
+            preferences.set(localPath, forKey: "localPath")
+            localNavigationRevision = UUID()
+        }
     }
-
-    func navigateLocal(_ path: String) { localPath = path; localSelection = []; refreshLocal() }
 
     func chooseLocalFolder() {
         guard !demoMode else { return }
@@ -135,7 +150,7 @@ final class AppModel: ObservableObject {
         Task {
             var session: SFTPSession?
             do {
-                let created = try SFTPSession(host: host, proxyPath: proxyPath, askpass: Bundle.main.executablePath)
+                let created = try sessionFactory(host, proxyPath, Bundle.main.executablePath)
                 session = created; browser = created
                 let saved = preferences.string(forKey: "remotePath.\(host)")
                 let path = try await created.perform { session in
@@ -161,7 +176,8 @@ final class AppModel: ObservableObject {
         connectionID = UUID(); listingID = UUID()
         browseCancellation?.cancel(); browseCancellation = nil
         browser?.stop(); browser = nil
-        connectedHost = ""; remotePath = ""; remoteFiles = []; remoteSelection = []
+        connectedHost = ""; remotePath = ""; remoteAddressFile = nil; remoteFiles = []; remoteSelection = []
+        remoteNavigationRevision = UUID()
         isConnecting = false; isRemoteLoading = false
         status = "连接已断开"
     }
@@ -169,31 +185,37 @@ final class AppModel: ObservableObject {
     func navigateRemote(_ requested: String) {
         guard !demoMode else { return }
         guard let session = browser, connected else { return }
-        let token = UUID(); listingID = token
+        let token = UUID(), directory = remotePath; listingID = token
         browseCancellation?.cancel()
         let cancellation = Cancellation(); browseCancellation = cancellation
         isRemoteLoading = true
         Task {
             do {
-                let result = try await session.perform { session -> (String, [FileEntry]) in
-                    try cancellation.check()
-                    let path = try session.realpath(requested)
-                    try cancellation.check()
-                    return (path, try session.list(path, cancellation: cancellation))
+                let result = try await session.perform { session in
+                    try session.location(at: requested, relativeTo: directory, cancellation: cancellation)
                 }
                 guard listingID == token else { return }
-                let sameDirectory = remotePath == result.0
-                remotePath = result.0; remoteFiles = result.1
-                if sameDirectory { remoteSelection.formIntersection(Set(visibleRemote.map(\.path))) }
-                else { remoteSelection = [] }
+                showLocation(result, remote: true)
                 isRemoteLoading = false
-                preferences.set(remotePath, forKey: "remotePath.\(connectedHost)")
                 status = "已连接 · \(connectedHost)"
             } catch {
                 guard listingID == token else { return }
-                isRemoteLoading = false; alertMessage = "无法打开远程目录\n\n\(error.localizedDescription)"
+                isRemoteLoading = false; alertMessage = "无法打开远程路径\n\n\(error.localizedDescription)"
             }
         }
+    }
+
+    func refreshRemote() { navigateRemote(remoteAddress) }
+
+    func canTransferAddressFile(remote: Bool) -> Bool {
+        connected && !isLocalLoading && !isRemoteLoading && !localPath.isEmpty && !remotePath.isEmpty &&
+        (remote ? remoteAddressFile : localAddressFile)?.isRegularFile == true
+    }
+
+    func transferAddressFile(remote: Bool) {
+        guard canTransferAddressFile(remote: remote), let file = remote ? remoteAddressFile : localAddressFile else { return }
+        if remote { enqueueDownload(file, directory: URL(fileURLWithPath: localPath)) }
+        else { upload([URL(fileURLWithPath: file.path)]) }
     }
 
     func uploadSelection() { upload(selectedEntries(remote: false).map { URL(fileURLWithPath: $0.path) }) }
@@ -278,7 +300,7 @@ final class AppModel: ObservableObject {
                         created = existing.session; needsHandshake = false
                     } else {
                         reusable?.session.stop(); reusable = nil
-                        created = try SFTPSession(host: job.host, proxyPath: proxyPath, askpass: Bundle.main.executablePath)
+                        created = try sessionFactory(job.host, proxyPath, Bundle.main.executablePath)
                         transferConnectionsOpened += 1
                         reusable = (job.host, proxyPath, created); needsHandshake = true
                     }
@@ -347,7 +369,7 @@ final class AppModel: ObservableObject {
 
     private func flushTransferRefresh() {
         if dirtyLocalDirectories.contains(URL(fileURLWithPath: localPath).standardizedFileURL.path) { refreshLocal() }
-        if connected, dirtyRemoteDirectories[connectedHost]?.contains(remotePath) == true { navigateRemote(remotePath) }
+        if connected, dirtyRemoteDirectories[connectedHost]?.contains(remotePath) == true { refreshRemote() }
         dirtyLocalDirectories.removeAll(); dirtyRemoteDirectories.removeAll()
     }
 

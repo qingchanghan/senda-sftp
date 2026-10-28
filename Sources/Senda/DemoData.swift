@@ -45,6 +45,14 @@ enum DemoData {
         }
         model.jobs = [job("training-run", uploading: true, total: 2_400_000_000, completed: 1_584_000_000, state: .running),
                       job("results.csv", uploading: false, total: 2_621_440, completed: 2_621_440, state: .done)]
+        if CommandLine.arguments.contains("--demo-file") {
+            if let file = model.localFiles.first(where: { $0.name == "config.yaml" }) {
+                model.showLocation(BrowserLocation(directoryPath: model.localPath, entries: [file], file: file), remote: false)
+            }
+            if let file = model.remoteFiles.first(where: { $0.name == "results.csv" }) {
+                model.showLocation(BrowserLocation(directoryPath: model.remotePath, entries: [file], file: file), remote: true)
+            }
+        }
         return model
     }
 }

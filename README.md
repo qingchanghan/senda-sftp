@@ -17,6 +17,7 @@
 
 - **Your SSH setup, in a window.** Uses `/usr/bin/ssh` for authentication, proxies, keys and host verification.
 - **Drag in either direction.** Upload from Finder; download to Finder, Desktop or the local pane. Select multiple files and folders with ⌘/⇧.
+- **Go straight to a file.** Paste its path into either address bar to inspect it and upload/download with one click.
 - **Whole-folder progress.** Sums regular files throughout the directory before transferring, then shows cumulative bytes and percentage.
 - **Inspectable transfers.** View and copy the source machine/path and the resolved destination, including automatic collision renaming.
 - **Responsive by design.** Native virtualized file tables, independent browsing and transfer connections, throttled per-task progress and connection reuse.
@@ -79,6 +80,27 @@ folder or enter a path and press Return. Drag selections between panes, onto a
 folder row, or from the remote pane to Finder. You can also use the upload/download
 buttons. Double-clicking a remote regular file downloads it to the local pane.
 
+You can also paste a **full file path** into either address bar and press Return.
+Senda shows the file's name, size and destination, with an **Upload this file** or
+**Download this file** button. Choose **Containing folder** to return to browsing.
+The destination is the other pane's current directory; when that pane also shows
+a file, its parent directory is used. Existing names still get a collision suffix.
+Resolving an address does not start a transfer automatically.
+
+Relative paths use the pane's current directory. Local `file://` URLs and `~`
+paths work; remote `~/` uses the remote login directory. Explicit hidden files
+work without changing the hidden-file preference, and their parent does not need
+to be listable. Symlinks to files and special files remain unsupported.
+
+![File addresses with explicit upload and download actions](docs/images/file-address-light.png)
+
+<details>
+<summary>File addresses in dark appearance</summary>
+
+![File addresses in dark appearance](docs/images/file-address-dark.png)
+
+</details>
+
 | Shortcut | Action |
 | --- | --- |
 | ⌘K | Connect |
@@ -122,6 +144,7 @@ swift build --product Senda -j 2
 # Offline screenshot fixtures (no SSH or user files)
 open dist/Senda.app --args --demo
 open dist/Senda.app --args --demo --dark
+open dist/Senda.app --args --demo --demo-file
 ```
 
 See [architecture and design tokens](docs/architecture.md), [verification](docs/verification.md)

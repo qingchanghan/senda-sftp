@@ -6,11 +6,13 @@ Senda is a Swift package with no external runtime dependency.
 | --- | --- |
 | `Sources/SFTPCore/Models.swift` | SSH alias discovery, file metadata and path safety |
 | `Sources/SFTPCore/SFTP.swift` | SFTP v3 packets over system OpenSSH pipes; serial session queue |
+| `Sources/SFTPCore/BrowserLocation.swift` | Directory/file address resolution without scanning a file's parent |
 | `Sources/SFTPCore/TransferPlan.swift` | Immutable recursive transfer plan and cumulative byte totals |
 | `Sources/Senda/AppModel.swift` | Main-actor browsing state, serial transfer queue, session reuse |
 | `Sources/Senda/TransferJob.swift` | Independently observed progress and immutable source endpoints |
 | `Sources/Senda/FileTable.swift` | Virtualized native tables, multi-selection and Finder file promises |
 | `Sources/Senda/ContentView.swift`, `HostSidebar.swift`, `TransferRow.swift` | Workspace and Beautiful UI adaptations |
+| `Sources/Senda/AddressedFileView.swift` | Focused file metadata, destination and explicit transfer action |
 | `Sources/Senda/PreferencesMigration.swift` | One-time, allowlisted preference migration from Harbor |
 | `Sources/Senda/Diagnostics/` | Offline checks and opt-in remote integration entry points |
 | `Tests/SFTPCoreTests/` | Standalone protocol test runner, usable with Command Line Tools |
@@ -32,6 +34,25 @@ UI updates are throttled to about 10 Hz and target only the observed job. The fi
 result carries the destination and byte counts back across the async boundary so
 completion cannot overtake a throttled UI update. A failure/cancellation ends that
 session; other queued tasks can reconnect.
+
+## File addresses
+
+Each pane stores a committed directory and an optional addressed file separately.
+The address field displays the full file path, while queue destinations and saved
+preferences always use the parent directory. Relative paths resolve against the
+committed directory. A failed request keeps the previous location; request IDs
+discard stale results, and disconnect invalidates pending remote navigation.
+
+Local metadata and directory enumeration run in a detached task. Remote resolution
+uses LSTAT, REALPATH and, for directories, READDIR on the browsing session queue.
+It never interpolates an address into a shell command. An explicit hidden file
+bypasses the browser filter without changing the hidden-file preference. Refresh
+retains file mode and does not overwrite an address still being typed.
+
+The focused view queues a transfer only when the user presses its action button.
+It reuses the existing planning, progress, collision naming and transfer details.
+The offline address checks inject a local SFTP server into the real model and
+queue; ordinary application sessions continue to use system OpenSSH.
 
 ## Global design tokens
 
@@ -59,4 +80,5 @@ Refreshes are coalesced and obsolete directory results are ignored.
 Launch the built application with `--demo` (add `--dark` for dark mode). This uses
 synthetic hosts, paths and jobs, bypasses SSH discovery, disables network and file
 mutation actions, and uses a separate preference domain. Selection and transfer
-details use the actual application views. Quit the demo before launching normally.
+details use the actual application views. Add `--demo-file` to show file addresses
+in both panes. Quit the demo before launching normally.

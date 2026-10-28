@@ -1,6 +1,6 @@
-# Verification — Senda 1.5.0
+# Verification — Senda 1.6.0
 
-Verified locally on 2026-10-26 with macOS 26.4.1, Apple silicon, Swift 6.1.2 in Swift
+Verified locally on 2026-10-28 with macOS 26.4.1, Apple silicon, Swift 6.1.2 in Swift
 5 language mode. The minimum deployment target is macOS 13; a macOS 13 device and
 Intel hardware have not been tested. GitHub Actions runs the offline checks,
 builds the application and verifies its signature on macOS 14. See the
@@ -13,9 +13,11 @@ for results for each commit.
 | Custom UI global color/spacing guard | Passed |
 | Local SFTP checks | 13 suites, 0 failures |
 | Native selection, drag payload and preference migration checks | 21 checks, 0 failures |
-| Real SSH ProxyCommand batch round trip | Passed; temporary remote/local fixtures cleaned up |
+| File-address navigation and real local SFTP queue checks | 40 checks, 0 failures |
+| Native address input, refresh, Esc and containing-folder interaction | Passed with disposable local files |
 | Release bundle signature | `codesign --verify --deep --strict` passed |
 | Binary ZIP integrity | Passed |
+| Compressed DMG integrity | Passed |
 
 The directory regression covers differently sized files across nested directories,
 empty files, empty directories, skipped symlinks and root collision renaming. Every
@@ -23,18 +25,33 @@ callback retains the same whole-tree total, completed bytes never decrease, and 
 last callback equals the total. Already-cancelled scans produce no destination.
 Existing checks also cover cancellation cleanup and preservation of existing files.
 
-The real proxy-backed batch check validates queue-model totals after folder upload
-and download, binary equality, one transfer connection per three-item batch,
+The file-address checks cover full and relative paths, local file URLs, remote
+home paths, hidden/empty files, Unicode, spaces and punctuation. They exercise
+actual model queue uploads/downloads, compare file bytes, preserve colliding files,
+keep file mode after refresh, and reject unsupported symlinks/special files. Files
+inside non-listable parents remain addressable. Invalid paths preserve the last
+valid location; obsolete requests and disconnect cannot restore stale results.
+These checks use the local system SFTP server and disposable directories, without
+reading SSH configuration or contacting a remote machine.
+
+The real ProxyCommand batch check passed for 1.5.0 on 2026-10-26; it was not rerun
+against a live remote host for 1.6.0. That check validates queue-model totals after
+folder upload and download, binary equality, one transfer connection per three-item batch,
 selection retention, native file-promise callbacks, cancelling a queued item,
 resolved collision destinations, historical endpoint snapshots and failure details.
 This is a native API/callback test; it does not synthesize a Finder mouse drag.
 
-The actual release UI was inspected in light and dark appearance. Host search
-filters the fixture list correctly. The workspace and detail screenshots use
+The 1.6.0 file-address UI was inspected in light and dark appearance. File metadata,
+destination paths, containing-folder controls and transfer actions render in both
+themes. The workspace, file-address and detail screenshots use
 synthetic endpoints, show 1.58 GB / 2.4 GB for the directory task, and share the same
-app views as ordinary transfers. Native tables, paths, status badges and detail
-content render in both themes. No real hostnames or file paths appear in the
+app views as ordinary transfers. No real hostnames or file paths appear in the
 published screenshots.
+
+The release app was also exercised with disposable local files through its native
+address field: paste a complete path and press Return, resolve a relative hidden
+file, refresh without losing an unsubmitted edit, restore the address with Esc,
+and return to the containing directory. The field and file card stayed in sync.
 
 Performance verification uses 20,000 synthetic entries. Progress mutations emit
 zero model-wide notifications, visible-entry checksum is 3,200,000, and selection

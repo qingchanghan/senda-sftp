@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.6.0 — 2026-10-28
+
+- Paste a file path into either address bar and press Return to open a focused
+  file view with its size, destination and an upload/download action.
+- Open the containing folder with one click. Refresh retains file mode, and
+  remembered locations and transfer destinations remain directories.
+- Support explicit hidden files, relative paths, local file URLs and remote `~/`
+  paths without listing the file's parent or executing a shell command.
+- Keep the previous location on invalid input and discard obsolete navigation
+  results. File symlinks and special files retain their existing restrictions.
+- Add offline address and real SFTP queue regression checks.
+
 ## 1.5.0 — 2026-10-26
 
 - Rename Harbor to Senda; import existing saved preferences once.
