@@ -4,12 +4,12 @@
 
 [Download](https://github.com/qingchanghan/senda-sftp/releases/latest) · [简体中文](README.zh-CN.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [MIT license](LICENSE)
 
-![Senda — local and remote files with whole-folder transfer progress](docs/images/workspace-light.png)
+![Senda — local and remote files with whole-folder progress and live speed](docs/images/transfer-speed-light.png)
 
 <details>
 <summary>Dark appearance / 深色外观</summary>
 
-![Senda dark workspace](docs/images/workspace-dark.png)
+![Senda dark workspace](docs/images/transfer-speed-dark.png)
 
 </details>
 
@@ -19,6 +19,7 @@
 - **Drag in either direction.** Upload from Finder; download to Finder, Desktop or the local pane. Select multiple files and folders with ⌘/⇧.
 - **Go straight to a file.** Paste its path into either address bar to inspect it and upload/download with one click.
 - **Whole-folder progress.** Sums regular files throughout the directory before transferring, then shows cumulative bytes and percentage.
+- **Live transfer speed.** See recent download/upload throughput in the queue and details, automatically scaled from B/s to GB/s.
 - **Inspectable transfers.** View and copy the source machine/path and the resolved destination, including automatic collision renaming.
 - **Responsive by design.** Native virtualized file tables, independent browsing and transfer connections, throttled per-task progress and connection reuse.
 - **Light and dark.** Native adaptations of [Beautiful UI](https://www.beautifului.dev/) with one shared token palette. [Attribution and source mapping](THIRD_PARTY_NOTICES.md).
@@ -116,7 +117,13 @@ names get a suffix such as ` (2)`; completed files are committed from temporary
 siblings. Details remain available until the queue is cleared or the app closes.
 The current application interface is in Simplified Chinese.
 
-![Transfer details with source and destination paths](docs/images/transfer-details.png)
+Running transfers show recent speed below the progress bar and in their details.
+Units adapt through B/s, KB/s, MB/s and GB/s (1 KB = 1,000 B). Speed uses a rolling
+two-second window of actual transferred bytes and refreshes every half second;
+it reaches zero on stalls and disappears after the task finishes or is cancelled.
+Directory transfers keep one speed measurement across all child files.
+
+![Transfer details with live speed and source and destination paths](docs/images/transfer-speed-details.png)
 
 ## Boundaries
 
@@ -145,6 +152,7 @@ swift build --product Senda -j 2
 open dist/Senda.app --args --demo
 open dist/Senda.app --args --demo --dark
 open dist/Senda.app --args --demo --demo-file
+open dist/Senda.app --args --demo --demo-speed
 ```
 
 See [architecture and design tokens](docs/architecture.md), [verification](docs/verification.md)

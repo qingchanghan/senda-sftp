@@ -13,7 +13,7 @@ No other component library is copied or loaded at runtime.
 | --- | --- |
 | `components/primitives/SidebarNav.tsx` | Host navigation, search field, hover and selected rows in `HostSidebar.swift` |
 | `components/primitives/RecordsTable.tsx` and the records CSS | File pane surface, header, row rules, selected rows and toolbar in `FileTable.swift` / `ContentView.swift`; file address surface in `AddressedFileView.swift` |
-| `components/primitives/TaskRows.tsx` | Transfer status ring, amount column and status capsules in `TransferRow.swift` |
+| `components/primitives/TaskRows.tsx` | Transfer status ring, amount/speed column and status capsules in `TransferRow.swift` / `TransferSpeedView.swift` |
 | `components/atoms/Button.tsx` | Capsule buttons in `SendaTheme.swift`, including file address actions |
 | `app/globals.css` | Color palettes and radii in `Design/tokens.css` |
 

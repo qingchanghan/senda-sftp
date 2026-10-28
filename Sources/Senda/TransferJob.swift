@@ -24,6 +24,7 @@ final class TransferJob: ObservableObject, Identifiable {
     var startedAt: Date?
     var session: SFTPSession?
     var completion: ((Error?) -> Void)?
+    private var rate = TransferRate()
 
     init(host: String, name: String, uploading: Bool, localURL: URL, remotePath: String, localMachine: String = ProcessInfo.processInfo.hostName) {
         self.localMachine = localMachine
@@ -37,10 +38,26 @@ final class TransferJob: ObservableObject, Identifiable {
     var requestedDestinationPath: String { uploading ? remotePath : localURL.path }
     var destinationPath: String { resolvedDestinationPath ?? requestedDestinationPath }
     var destinationPathLabel: String { resolvedDestinationPath == nil ? "目标路径（计划）" : "目标路径" }
+    var showsSpeed: Bool { state == .running && hasProgress && !cancellationRequested }
+
+    func updateProgress(completed: UInt64, total: UInt64, at time: TimeInterval) {
+        guard state == .running, completed >= self.completed else { return }
+        rate.record(completed: completed, at: time)
+        if !hasProgress { hasProgress = true }
+        if self.completed != completed { self.completed = completed }
+        if self.total != total { self.total = total }
+    }
+
+    func speedText(at time: TimeInterval = ProcessInfo.processInfo.systemUptime) -> String? {
+        guard showsSpeed else { return nil }
+        return rate.bytesPerSecond(at: time).map(TransferRateFormatter.string) ?? "测速中…"
+    }
+
     var detailsText: String {
         var lines = ["文件：\(name)", "状态：\(state.rawValue)",
                      "源机器：\(sourceMachine)", "源路径：\(sourcePath)",
                      "目标机器：\(destinationMachine)", "\(destinationPathLabel)：\(destinationPath)"]
+        if let speed = speedText() { lines.append("\(uploading ? "上传" : "下载")速度：\(speed)") }
         if destinationPath != requestedDestinationPath { lines.append("原定目标路径：\(requestedDestinationPath)") }
         if !error.isEmpty { lines.append("错误：\(error)") }
         return lines.joined(separator: "\n")

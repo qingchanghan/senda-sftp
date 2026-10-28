@@ -309,17 +309,15 @@ final class AppModel: ObservableObject {
                     let cancellation = job.cancellation, isPromise = job.completion != nil
                     let result = try await created.perform { session -> (String, UInt64, UInt64) in
                         if needsHandshake { try session.handshake() }
-                        var lastUpdate = Date.distantPast
+                        var lastUpdate = -TimeInterval.infinity
                         var finalCompleted: UInt64 = 0, finalTotal: UInt64 = 0
                         let progress: SFTPSession.Progress = { completed, total in
                             finalCompleted = completed; finalTotal = total
-                            guard Date().timeIntervalSince(lastUpdate) > 0.1 || completed == total else { return }
-                            lastUpdate = Date()
+                            let timestamp = ProcessInfo.processInfo.systemUptime
+                            guard timestamp - lastUpdate > 0.1 || completed == total else { return }
+                            lastUpdate = timestamp
                             Task { @MainActor [weak job] in
-                                guard let job, job.state == .running else { return }
-                                if !job.hasProgress { job.hasProgress = true }
-                                if job.completed < completed { job.completed = completed }
-                                if job.total != total { job.total = total }
+                                job?.updateProgress(completed: completed, total: total, at: timestamp)
                             }
                         }
                         let resolved: (String) -> Void = { path in

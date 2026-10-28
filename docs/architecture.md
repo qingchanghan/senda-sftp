@@ -8,6 +8,7 @@ Senda is a Swift package with no external runtime dependency.
 | `Sources/SFTPCore/SFTP.swift` | SFTP v3 packets over system OpenSSH pipes; serial session queue |
 | `Sources/SFTPCore/BrowserLocation.swift` | Directory/file address resolution without scanning a file's parent |
 | `Sources/SFTPCore/TransferPlan.swift` | Immutable recursive transfer plan and cumulative byte totals |
+| `Sources/SFTPCore/TransferRate.swift` | Two-second rolling throughput and decimal B/KB/MB/GB per-second formatting |
 | `Sources/Senda/AppModel.swift` | Main-actor browsing state, serial transfer queue, session reuse |
 | `Sources/Senda/TransferJob.swift` | Independently observed progress and immutable source endpoints |
 | `Sources/Senda/FileTable.swift` | Virtualized native tables, multi-selection and Finder file promises |
@@ -34,6 +35,13 @@ UI updates are throttled to about 10 Hz and target only the observed job. The fi
 result carries the destination and byte counts back across the async boundary so
 completion cannot overtake a throttled UI update. A failure/cancellation ends that
 session; other queued tasks can reconnect.
+
+Progress callbacks capture monotonic time on the protocol queue. Each job retains
+the recent cumulative-byte samples, ignoring stale callbacks. A small TimelineView
+refreshes its speed label every half second, including when no callbacks arrive;
+the two-second window then drains to zero on stalls. Planning and finished tasks
+have no speed label or timer. This adds no model-wide progress notifications or
+network requests. The same speed is available in transfer details and copied text.
 
 ## File addresses
 
@@ -81,4 +89,5 @@ Launch the built application with `--demo` (add `--dark` for dark mode). This us
 synthetic hosts, paths and jobs, bypasses SSH discovery, disables network and file
 mutation actions, and uses a separate preference domain. Selection and transfer
 details use the actual application views. Add `--demo-file` to show file addresses
-in both panes. Quit the demo before launching normally.
+in both panes, or `--demo-speed` for a synthetic download with live speed updates.
+Quit the demo before launching normally.

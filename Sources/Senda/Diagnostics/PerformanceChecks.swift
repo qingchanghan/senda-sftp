@@ -43,8 +43,8 @@ func runPerformanceChecks() -> Never {
     let observation = model.objectWillChange.sink { notifications += 1 }
     measure("progress_mutations_200_ms") {
         for index in 0..<200 {
-            model.jobs[0].completed = UInt64(index * 1024)
-            model.jobs[0].total = 1_000_000
+            model.jobs[0].updateProgress(completed: UInt64(index * 1024), total: 1_000_000,
+                                         at: Double(index) * 0.1)
         }
     }
     metrics["progress_window_notifications"] = Double(notifications)
@@ -58,7 +58,8 @@ func runPerformanceChecks() -> Never {
     hosting.layoutSubtreeIfNeeded()
     measure("hosted_progress_60_updates_ms") {
         for index in 0..<60 {
-            model.jobs[0].completed = UInt64(index * 16384)
+            model.jobs[0].updateProgress(completed: UInt64(200 * 1024 + index * 16384), total: 2_000_000,
+                                         at: 20 + Double(index) * 0.1)
             RunLoop.main.run(until: Date().addingTimeInterval(0.001))
             hosting.layoutSubtreeIfNeeded()
         }

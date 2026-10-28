@@ -35,5 +35,6 @@ Quit the running app, then launch `open dist/Senda.app --args --demo` for the li
 workspace, or add `--dark`. Capture the workspace and a transfer detail sheet into
 `docs/images/`. These are actual app views with synthetic data, not live transfers.
 Add `--demo-file` to capture the focused file-address views.
+Add `--demo-speed` for a synthetic download with continuously updating speed.
 Quit the demo and launch normally afterward. Do not include real SSH aliases or
 private paths in documentation screenshots.

@@ -12,6 +12,7 @@ struct SendaApp: App {
         if CommandLine.arguments.contains("--native-checks") { runNativeChecks() }
         if CommandLine.arguments.contains("--selection-checks") { runSelectionChecks() }
         if CommandLine.arguments.contains("--address-checks") { runAddressChecks() }
+        if CommandLine.arguments.contains("--speed-checks") { runSpeedChecks() }
         if CommandLine.arguments.contains("--batch-checks") { runBatchChecks() }
         if CommandLine.arguments.contains("--performance-checks") { runPerformanceChecks() }
         // OpenSSH invokes the same executable with the authentication prompt as its only argument.

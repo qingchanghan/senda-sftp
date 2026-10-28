@@ -5,7 +5,7 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parent.parent / 'Sources/Senda'
 files = ['ContentView.swift', 'HostSidebar.swift', 'FileTable.swift', 'SendaTheme.swift',
-         'TransferRow.swift', 'TransferDetailsView.swift', 'SendaApp.swift', 'AddressedFileView.swift']
+         'TransferRow.swift', 'TransferDetailsView.swift', 'TransferSpeedView.swift', 'SendaApp.swift', 'AddressedFileView.swift']
 patterns = [r'(?:Color|NSColor)\((?:red|white|calibratedRed|srgbRed):',
             r'\.padding\((?:\.[a-zA-Z]+,\s*)?\d',
             r'(?:spacing|cornerRadius|minLength|minWidth|minHeight|width|height):\s*\d',

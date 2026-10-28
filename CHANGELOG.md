@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.0 — 2026-10-28
+
+- Show live download and upload speed in the queue and transfer details, with
+  adaptive B/s, KB/s, MB/s and GB/s units.
+- Measure recent cumulative bytes using monotonic protocol timestamps. Directory
+  child changes retain the same speed window, and stalled transfers reach 0 B/s.
+- Refresh only the speed label every half second, and hide it during planning,
+  cancellation and after completion. Include speed in copied active-task details.
+- Add deterministic throughput/state checks and an offline `--demo-speed` fixture.
+
 ## 1.6.0 — 2026-10-28
 
 - Paste a file path into either address bar and press Return to open a focused

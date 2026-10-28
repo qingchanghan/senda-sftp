@@ -1,4 +1,4 @@
-# Verification — Senda 1.6.0
+# Verification — Senda 1.7.0
 
 Verified locally on 2026-10-28 with macOS 26.4.1, Apple silicon, Swift 6.1.2 in Swift
 5 language mode. The minimum deployment target is macOS 13; a macOS 13 device and
@@ -11,10 +11,12 @@ for results for each commit.
 | --- | --- |
 | Global CSS ↔ Swift token parity | Passed |
 | Custom UI global color/spacing guard | Passed |
-| Local SFTP checks | 13 suites, 0 failures |
+| Local SFTP and throughput checks | 19 suites, 0 failures |
 | Native selection, drag payload and preference migration checks | 21 checks, 0 failures |
 | File-address navigation and real local SFTP queue checks | 40 checks, 0 failures |
-| Native address input, refresh, Esc and containing-folder interaction | Passed with disposable local files |
+| Transfer-speed state and notification checks | 14 checks, 0 failures |
+| Live queue/detail speed and cancellation UI | Passed with synthetic transfers |
+| Native address input, refresh, Esc and containing-folder interaction | Passed in 1.6.0 with disposable local files |
 | Release bundle signature | `codesign --verify --deep --strict` passed |
 | Binary ZIP integrity | Passed |
 | Compressed DMG integrity | Passed |
@@ -36,7 +38,7 @@ These checks use the local system SFTP server and disposable directories, withou
 reading SSH configuration or contacting a remote machine.
 
 The real ProxyCommand batch check passed for 1.5.0 on 2026-10-26; it was not rerun
-against a live remote host for 1.6.0. That check validates queue-model totals after
+against a live remote host for 1.7.0. That check validates queue-model totals after
 folder upload and download, binary equality, one transfer connection per three-item batch,
 selection retention, native file-promise callbacks, cancelling a queued item,
 resolved collision destinations, historical endpoint snapshots and failure details.
@@ -49,10 +51,23 @@ synthetic endpoints, show 1.58 GB / 2.4 GB for the directory task, and share the
 app views as ordinary transfers. No real hostnames or file paths appear in the
 published screenshots.
 
-The release app was also exercised with disposable local files through its native
+The 1.6.0 release app was also exercised with disposable local files through its native
 address field: paste a complete path and press Return, resolve a relative hidden
 file, refresh without losing an unsubmitted edit, restore the address with Esc,
 and return to the containing directory. The field and file card stayed in sync.
+
+The 1.7.0 speed checks cover rolling-window interpolation, directory child changes,
+idle decay and recovery, initial measurements, delayed UI delivery, stale samples,
+large byte counters and all four adaptive unit boundaries. Job checks cover
+planning, cancellation, completion/failure, copied details, uploads and downloads.
+Protocol timestamps use monotonic uptime, and a half-second timer updates only the
+speed label. The model emits zero window-wide notifications during those checks.
+
+The new queue was inspected in light and dark appearance with `--demo --demo-speed`.
+The detail sheet displayed the same 24.5 MB/s as the queue; cancelling the synthetic
+task removed the speed label. The new screenshots show a synthetic 96 GB directory
+download and contain only demo hosts and paths. The UI sample rate is simulated;
+it is not a benchmark of a live SSH connection.
 
 Performance verification uses 20,000 synthetic entries. Progress mutations emit
 zero model-wide notifications, visible-entry checksum is 3,200,000, and selection

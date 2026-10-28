@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 
+@MainActor
 struct TransferDetailsView: View {
     @ObservedObject var job: TransferJob
     @Environment(\.dismiss) private var dismiss
@@ -25,6 +26,13 @@ struct TransferDetailsView: View {
                         .font(.system(size: 12, design: .monospaced)).foregroundStyle(T.ink2)
                 }
                 SendaProgressBar(fraction: job.total == 0 ? (job.state == .done ? 1 : 0) : Double(job.completed) / Double(job.total))
+                if job.showsSpeed {
+                    HStack(spacing: T.space(2)) {
+                        Text(job.uploading ? "上传速度" : "下载速度").font(.system(size: 12, weight: .medium))
+                        Spacer()
+                        TransferSpeedView(job: job)
+                    }
+                }
             }
             ScrollView {
                 VStack(alignment: .leading, spacing: T.space(4)) {

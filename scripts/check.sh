@@ -8,4 +8,5 @@ swift build --product Senda -j 2
 bin_dir="$(swift build --show-bin-path)"
 "$bin_dir/Senda" --selection-checks
 "$bin_dir/Senda" --address-checks
+"$bin_dir/Senda" --speed-checks
 "$bin_dir/Senda" --performance-checks --verify

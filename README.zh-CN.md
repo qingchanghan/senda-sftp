@@ -4,12 +4,12 @@
 
 [下载](https://github.com/qingchanghan/senda-sftp/releases/latest) · [English](README.md) · [贡献指南](CONTRIBUTING.md) · [更新记录](CHANGELOG.md) · [MIT 许可](LICENSE)
 
-![Senda 文件工作台](docs/images/workspace-light.png)
+![Senda 文件工作台：目录整体进度与实时下载速度](docs/images/transfer-speed-light.png)
 
 <details>
 <summary>Dark appearance / 深色外观</summary>
 
-![Senda dark workspace](docs/images/workspace-dark.png)
+![Senda dark workspace](docs/images/transfer-speed-dark.png)
 
 </details>
 
@@ -19,6 +19,7 @@
 - ⌘ 点选、⇧ 连选、全选；文件与目录可混合批量传输。
 - **文件直达**：在任一地址栏粘贴文件路径并回车，查看文件信息后一键上传或下载。
 - **目录整体进度**：先统计全部普通文件，再累计字节数；切换子文件不会重置进度条。
+- **实时传输速度**：队列和详情展示下载/上传速度，自动切换 B/s、KB/s、MB/s、GB/s。
 - 每条任务可查看源机器/路径、目标机器/路径，并复制详情。重名自动保留两份，显示实际改名后的目标。
 - 原生虚拟化文件列表、连接复用、进度局部刷新；传输时仍可浏览目录。
 - 明暗主题统一使用 [Beautiful UI](https://www.beautifului.dev/) 的全局令牌。[组件来源与许可](THIRD_PARTY_NOTICES.md)。
@@ -86,7 +87,9 @@ Host dev-box
 
 目录任务会先显示「计算大小」，然后展示整棵目录的累计字节和百分比；每个队列任务单独统计。队列详情保留到清除队列或退出应用。
 
-![传输详情](docs/images/transfer-details.png)
+传输中会在进度条下方及详情中显示实时速度，单位按 B/s、KB/s、MB/s、GB/s 自动切换（1 KB = 1,000 B）。速度按最近约 2 秒实际传输的字节计算，每半秒刷新；停滞时降到 0 B/s，完成或取消后停止显示。下载目录时，切换子文件不会重置速度统计。
+
+![传输详情：实时速度与源、目标路径](docs/images/transfer-speed-details.png)
 
 ## 传输边界
 
@@ -109,6 +112,8 @@ swift build --product Senda -j 2
 open dist/Senda.app --args --demo
 # 文件直达界面；加 --dark 查看深色外观
 open dist/Senda.app --args --demo --demo-file
+# 持续更新速度的离线演示
+open dist/Senda.app --args --demo --demo-speed
 ```
 
 更多信息：[架构与全局令牌](docs/architecture.md)、[验证记录](docs/verification.md)、[发布说明](docs/releasing.md)。本地协议检查使用 macOS 自带的 SFTP server，不需要开启「远程登录」。

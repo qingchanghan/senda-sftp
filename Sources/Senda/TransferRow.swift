@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Beautiful UI TaskRows: status ring, amount column, semantic capsule, detail action.
+/// Beautiful UI TaskRows: status ring, amount/speed column, semantic capsule, detail action.
+@MainActor
 struct TransferRow: View {
     @ObservedObject var job: TransferJob
     let onCancel: () -> Void
@@ -34,13 +35,16 @@ struct TransferRow: View {
             }.frame(maxWidth: .infinity, alignment: .leading)
             if job.hasProgress {
                 VStack(alignment: .trailing, spacing: T.space(1.5)) {
-                    HStack(spacing: T.space(2)) {
-                        Text("\(Self.bytes(job.completed)) / \(Self.bytes(job.total))").foregroundStyle(T.ink2)
-                        Text("\(Int(fraction * 100))%").foregroundStyle(T.ink)
-                    }.font(.system(size: 10, design: .monospaced)).monospacedDigit()
-                    SendaProgressBar(fraction: fraction, color: color)
-                }.frame(width: T.space(50)).accessibilityElement(children: .ignore)
-                    .accessibilityLabel("整体进度 \(Int(fraction * 100))%，\(Self.bytes(job.completed)) / \(Self.bytes(job.total))")
+                    VStack(alignment: .trailing, spacing: T.space(1.5)) {
+                        HStack(spacing: T.space(2)) {
+                            Text("\(Self.bytes(job.completed)) / \(Self.bytes(job.total))").foregroundStyle(T.ink2)
+                            Text("\(Int(fraction * 100))%").foregroundStyle(T.ink)
+                        }.font(.system(size: 10, design: .monospaced)).monospacedDigit()
+                        SendaProgressBar(fraction: fraction, color: color)
+                    }.accessibilityElement(children: .ignore)
+                        .accessibilityLabel("整体进度 \(Int(fraction * 100))%，\(Self.bytes(job.completed)) / \(Self.bytes(job.total))")
+                    TransferSpeedView(job: job)
+                }.frame(width: T.space(50))
             } else if job.state == .running {
                 ProgressView().controlSize(.small).frame(width: T.space(7))
             }

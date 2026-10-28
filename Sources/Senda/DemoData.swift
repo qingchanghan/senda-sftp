@@ -53,6 +53,24 @@ enum DemoData {
                 model.showLocation(BrowserLocation(directoryPath: model.remotePath, entries: [file], file: file), remote: true)
             }
         }
+        if CommandLine.arguments.contains("--demo-speed") {
+            let total: UInt64 = 96_000_000_000, initial: UInt64 = 63_360_000_000
+            let download = job("checkpoints", uploading: false, total: total, completed: 0, state: .running)
+            let start = ProcessInfo.processInfo.systemUptime
+            download.updateProgress(completed: initial - 49_000_000, total: total, at: start - 2)
+            download.updateProgress(completed: initial, total: total, at: start)
+            model.jobs[0] = download
+            Task { @MainActor [weak download] in
+                while true {
+                    do { try await Task.sleep(nanoseconds: 500_000_000) } catch { return }
+                    guard let download, download.state == .running, !download.cancellation.isCancelled else { return }
+                    let now = ProcessInfo.processInfo.systemUptime
+                    let completed = initial + UInt64(min(Double(total - initial), (now - start) * 24_500_000))
+                    download.updateProgress(completed: completed, total: total, at: now)
+                    if completed == total { download.state = .done; return }
+                }
+            }
+        }
         return model
     }
 }

@@ -11,6 +11,6 @@ open an issue asking the maintainer for a private contact without including
 exploit details, secrets or affected private hostnames. Never post credentials or
 full SSH/proxy logs publicly.
 
-The current supported version is 1.6.x. This is a new project and has not received
+The current supported version is 1.7.x. This is a new project and has not received
 an independent security audit. There is no telemetry, automatic update service or
 credential sync.

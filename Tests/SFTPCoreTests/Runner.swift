@@ -48,7 +48,7 @@ class CheckCase {
 @main
 struct CheckRunner {
     static func main() {
-        let config = ConfigurationTests(), sftp = SFTPIntegrationTests(), remote = RemoteSmokeTests()
+        let config = ConfigurationTests(), sftp = SFTPIntegrationTests(), remote = RemoteSmokeTests(), rate = TransferRateTests()
         var checks: [(String, CheckCase, () throws -> Void)] = [
             ("SSH aliases and proxy discovery", config, config.testConcreteAliasesAndProxyDiscovery),
             ("SSH includes and cycles", config, config.testIncludesAvoidCycles),
@@ -62,7 +62,13 @@ struct CheckRunner {
             ("Cancellation and partial-file cleanup", sftp, sftp.testCancellationCleansPartialFiles),
             ("Existing file preservation", sftp, sftp.testPermissionErrorDoesNotReplaceTarget),
             ("Interrupt blocked connection", sftp, sftp.testStopInterruptsBlockedConnection),
-            ("Cancelled listing preserves the connection", sftp, sftp.testCancelledListingKeepsConnectionUsable)
+            ("Cancelled listing preserves the connection", sftp, sftp.testCancelledListingKeepsConnectionUsable),
+            ("Recent speed across cumulative directory progress", rate, rate.testRecentWindow),
+            ("Speed decays on stalls and recovers", rate, rate.testStallAndRecovery),
+            ("Speed startup and protocol timestamps", rate, rate.testStartupAndProtocolTimestamps),
+            ("Speed ignores stale and invalid samples", rate, rate.testStaleAndInvalidSamples),
+            ("Speed preserves precision for large counters", rate, rate.testLargeCounters),
+            ("Adaptive B/KB/MB/GB per-second units", rate, rate.testAdaptiveUnits)
         ]
         if ProcessInfo.processInfo.environment["SENDA_TEST_SSH_HOST"] != nil {
             checks = [("Remote SSH ProxyCommand round trip", remote, remote.testConfiguredSSHProxyRoundTrip)]

@@ -64,7 +64,7 @@ struct HostSidebar: View {
                 HStack(spacing: T.space(2)) {
                     Text("SENDA").tracking(2)
                     Spacer()
-                    Text("v1.6.0")
+                    Text("v1.7.0")
                 }.font(.system(size: 9, design: .monospaced)).foregroundStyle(T.ink3)
             }.padding(T.space(5))
         }
